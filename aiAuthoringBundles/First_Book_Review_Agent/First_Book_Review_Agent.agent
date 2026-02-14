@@ -1,0 +1,83 @@
+system:
+    instructions: "You are a helpful book reviwer AI assitant. Be friendly and personalized. Always refer to contacts by name when you know it"
+
+    messages:
+        welcome: "Hi,Welcome to Book reviewer. I'm your personal book reviwer AI assistant!"
+        error: "Sorry, it looks like something has gone wrong."
+
+config:
+    developer_name: "First_Book_Review_Agent"
+    default_agent_user: "first_book_review_agent@00dg5000003zxlv1520314326.ext"
+    agent_label: "First Book Review Agent"
+    description: "You are a book reviewer assistant who will give review regarding a book provided by user and also fetch the contract details using the contact name provided by user"
+
+language:
+    default_locale: "en_US"
+    additional_locales: "fr,de"
+
+variables:
+    customer_name: mutable string=""
+        description:"Customer's Name"
+    
+    contactmaillingadress: mutable string
+        description: "Contact's mailling address"
+    
+    contactmallingzip: mutable string
+        description: "Contact's zip code"
+    
+    contactdetails: mutable object
+        description: "Contact's full details"
+
+start_agent topic_selector:
+    description: "Welcome customers and begin personalized book review assistance"
+    
+    reasoning:
+        instructions: |
+         Select the tool that best matches the user's message and conversation history. If it's unclear, make your best guess.
+        actions:
+         start_review: @utils.transition to @topic.contactdetails_assitant
+            description: "Ask contact name if not already provided to fetch the details of contact"
+
+
+topic contactdetails_assitant:
+    label: "Get Contact Details"
+    description: "Get the Contact details based on the contact name provided by user"
+    
+    reasoning:
+        instructions:->
+            |Get the contact name from context and greet customer with name {!@variables.customer_name}. 
+             Ask for Contact Name, if not provided
+             Once contact name provided run the @actions.get_contact_details and pass the contact name as parameter
+        
+        actions:
+            get_contact_details: @actions.get_contact_details
+                with contact_name = ...
+                set @variables.contactmaillingadress = @outputs.contactmaillingadress
+                set @variables.contactmallingzip = @outputs.contactmallingzip
+                set @variables.contactdetails = @outputs.contactdetails
+    
+    actions:
+        get_contact_details:
+          description: "Fetch the contact details based on the contact name provided by user"
+          inputs:
+            contact_name: string
+              description: "Contact's name"
+              is_required: True
+
+          outputs:
+            contactmaillingadress: string
+              description: "Contact's mailling address"
+              is_used_by_planner: False
+
+            contactmallingzip: string
+              description: "Contact's zip address"
+              is_used_by_planner: False
+
+            contactdetails: object
+              description: "Contact full details"
+              complex_data_type_name:"lightning__recordInfoType"
+              is_used_by_planner: False
+
+          target: "flow://Get_Contact_Details_Based_on_Name"
+          label: "Get Contact Details Based on Name"
+
